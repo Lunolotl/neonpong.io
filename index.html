@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
 <title>Neon Pong</title>
 
 <style>
-
 html, body {
   margin: 0;
   overflow: hidden;
@@ -19,7 +18,6 @@ canvas {
   background:
     radial-gradient(circle at center, #111 0%, #050510 70%);
 }
-
 </style>
 </head>
 
@@ -28,30 +26,18 @@ canvas {
 <canvas id="game"></canvas>
 
 <script>
-
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-function resize() {
-
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-
-  bot.x = canvas.width - 40;
-
-}
-
-window.addEventListener("resize", resize);
-
 let gameState = "menu";
-
 const WIN_SCORE = 5;
 
 let winner = "";
-
 let pulse = 0;
-
 let shake = 0;
+
+let smashActive = false;
+let smashTimer = 0;
 
 const player = {
   x: 20,
@@ -70,8 +56,8 @@ const bot = {
 };
 
 const ball = {
-  x: 300,
-  y: 300,
+  x: 0,
+  y: 0,
   r: 10,
   vx: 7,
   vy: 4
@@ -82,65 +68,57 @@ const trail = [];
 const stars = [];
 
 for (let i = 0; i < 120; i++) {
-
   stars.push({
-
     x: Math.random() * window.innerWidth,
     y: Math.random() * window.innerHeight,
     size: Math.random() * 2
-
   });
-
 }
 
-resize();
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  bot.x = canvas.width - 40;
+}
 
-resetBall();
+window.addEventListener("resize", resize);
 
 window.addEventListener("mousemove", e => {
-
   player.y = e.clientY - player.h / 2;
-
 });
 
 window.addEventListener("keydown", e => {
 
-  if (e.code !== "Space") return;
-
-  e.preventDefault();
-
-  if (gameState === "menu") {
-
-    gameState = "playing";
-
+  if (e.code === "KeyE" && gameState === "playing") {
+    smashActive = true;
+    smashTimer = 15;
   }
 
-  else if (gameState === "gameover") {
+  if (e.code === "Space") {
 
-    resetGame();
+    e.preventDefault();
 
-    gameState = "playing";
+    if (gameState === "menu") {
+      gameState = "playing";
+    }
 
+    else if (gameState === "gameover") {
+      resetGame();
+      gameState = "playing";
+    }
   }
-
 });
 
 function resetGame() {
-
   player.score = 0;
   bot.score = 0;
-
   winner = "";
-
   particles.length = 0;
   trail.length = 0;
-
   resetBall();
-
 }
 
 function resetBall() {
-
   ball.x = canvas.width / 2;
   ball.y = canvas.height / 2;
 
@@ -148,7 +126,15 @@ function resetBall() {
   ball.vy = (Math.random() - 0.5) * 6;
 
   trail.length = 0;
+}
 
+function collision(ball, paddle) {
+  return (
+    ball.x - ball.r < paddle.x + paddle.w &&
+    ball.x + ball.r > paddle.x &&
+    ball.y - ball.r < paddle.y + paddle.h &&
+    ball.y + ball.r > paddle.y
+  );
 }
 
 function createExplosion(x, y, color) {
@@ -156,17 +142,12 @@ function createExplosion(x, y, color) {
   for (let i = 0; i < 18; i++) {
 
     particles.push({
-
       x,
       y,
-
       vx: (Math.random() - 0.5) * 8,
       vy: (Math.random() - 0.5) * 8,
-
       life: 1,
-
       color
-
     });
 
   }
@@ -177,7 +158,7 @@ function updateParticles() {
 
   for (let i = particles.length - 1; i >= 0; i--) {
 
-    const p = particles[i];
+    let p = particles[i];
 
     p.x += p.vx;
     p.y += p.vy;
@@ -185,9 +166,7 @@ function updateParticles() {
     p.life -= 0.03;
 
     if (p.life <= 0) {
-
       particles.splice(i, 1);
-
     }
 
   }
@@ -208,15 +187,7 @@ function drawParticles() {
     ctx.shadowColor = p.color;
 
     ctx.beginPath();
-
-    ctx.arc(
-      p.x,
-      p.y,
-      2.5,
-      0,
-      Math.PI * 2
-    );
-
+    ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
@@ -255,15 +226,7 @@ function drawBall() {
   ctx.shadowColor = "#00e5ff";
 
   ctx.beginPath();
-
-  ctx.arc(
-    ball.x,
-    ball.y,
-    ball.r,
-    0,
-    Math.PI * 2
-  );
-
+  ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.restore();
@@ -278,21 +241,12 @@ function drawTrail() {
 
     ctx.save();
 
-    ctx.globalAlpha =
-      (i / trail.length) * 0.18;
+    ctx.globalAlpha = (i / trail.length) * 0.18;
 
     ctx.fillStyle = "#00e5ff";
 
     ctx.beginPath();
-
-    ctx.arc(
-      t.x,
-      t.y,
-      ball.r * 0.9,
-      0,
-      Math.PI * 2
-    );
-
+    ctx.arc(t.x, t.y, ball.r * 0.9, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
@@ -320,7 +274,7 @@ function drawStars() {
 
   stars.forEach(star => {
 
-    ctx.fillStyle = "rgba(255,255,255,0.18)";
+    ctx.fillStyle = "rgba(255,255,255,0.15)";
 
     ctx.beginPath();
 
@@ -343,13 +297,7 @@ function drawMenuScreen() {
   pulse += 0.05;
 
   ctx.fillStyle = "#050510";
-
-  ctx.fillRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
+  ctx.fillRect(0,0,canvas.width,canvas.height);
 
   drawStars();
 
@@ -357,47 +305,35 @@ function drawMenuScreen() {
 
   ctx.textAlign = "center";
 
-  ctx.shadowBlur =
-    30 + Math.sin(pulse) * 10;
-
+  ctx.shadowBlur = 30 + Math.sin(pulse) * 10;
   ctx.shadowColor = "#00e5ff";
 
   ctx.fillStyle = "#00e5ff";
-
   ctx.font = "bold 90px Arial";
 
   ctx.fillText(
     "NEON PONG",
-    canvas.width / 2,
-    canvas.height / 2 - 60
+    canvas.width/2,
+    canvas.height/2 - 60
   );
 
   ctx.restore();
 
   ctx.fillStyle = "white";
-
   ctx.font = "28px Arial";
 
   ctx.fillText(
-    "LEFT CLICK AND SPACE TO START",
-    canvas.width / 2,
-    canvas.height / 2 + 30
+    "SPACE TO START • E TO SMASH",
+    canvas.width/2,
+    canvas.height/2 + 40
   );
 
 }
 
 function drawEndScreen() {
 
-  pulse += 0.05;
-
   ctx.fillStyle = "#050510";
-
-  ctx.fillRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
+  ctx.fillRect(0,0,canvas.width,canvas.height);
 
   drawStars();
 
@@ -405,59 +341,37 @@ function drawEndScreen() {
 
   ctx.textAlign = "center";
 
-  ctx.shadowBlur =
-    35 + Math.sin(pulse) * 12;
-
-  ctx.shadowColor =
-    winner === "PLAYER WINS"
-    ? "#00ff99"
-    : "#ff0044";
-
   ctx.fillStyle =
     winner === "PLAYER WINS"
     ? "#00ff99"
     : "#ff0044";
 
+  ctx.shadowBlur = 30;
+  ctx.shadowColor = ctx.fillStyle;
+
   ctx.font = "bold 90px Arial";
 
   ctx.fillText(
     winner,
-    canvas.width / 2,
-    canvas.height / 2 - 80
+    canvas.width/2,
+    canvas.height/2 - 80
   );
 
   ctx.restore();
 
   ctx.fillStyle = "white";
-
-  ctx.font = "32px Arial";
+  ctx.font = "30px Arial";
 
   ctx.fillText(
-    player.score + "  -  " + bot.score,
-    canvas.width / 2,
-    canvas.height / 2
+    `${player.score} - ${bot.score}`,
+    canvas.width/2,
+    canvas.height/2
   );
-
-  ctx.font = "24px Arial";
 
   ctx.fillText(
     "PRESS SPACE TO RESTART",
-    canvas.width / 2,
-    canvas.height / 2 + 70
-  );
-
-}
-
-function collision(ball, paddle) {
-
-  return (
-
-    ball.x - ball.r < paddle.x + paddle.w &&
-    ball.x + ball.r > paddle.x &&
-
-    ball.y - ball.r < paddle.y + paddle.h &&
-    ball.y + ball.r > paddle.y
-
+    canvas.width/2,
+    canvas.height/2 + 80
   );
 
 }
@@ -465,6 +379,16 @@ function collision(ball, paddle) {
 function update() {
 
   if (gameState !== "playing") return;
+
+  if (smashActive) {
+
+    smashTimer--;
+
+    if (smashTimer <= 0) {
+      smashActive = false;
+    }
+
+  }
 
   ball.x += ball.vx;
   ball.y += ball.vy;
@@ -475,9 +399,7 @@ function update() {
   });
 
   if (trail.length > 10) {
-
     trail.shift();
-
   }
 
   if (
@@ -507,23 +429,46 @@ function update() {
   ) {
 
     let hitPos =
-
       (ball.y - (player.y + player.h / 2))
       / (player.h / 2);
 
-    ball.vx = Math.abs(ball.vx) + 0.25;
+    if (smashActive) {
 
-    ball.vy = hitPos * 8;
+      ball.vx = Math.abs(ball.vx) + 8;
+      ball.vy = hitPos * 14;
+
+      createExplosion(
+        ball.x,
+        ball.y,
+        "#ffffff"
+      );
+
+      createExplosion(
+        ball.x,
+        ball.y,
+        "#ff00ff"
+      );
+
+      shake = 18;
+
+      smashActive = false;
+
+    } else {
+
+      ball.vx = Math.abs(ball.vx) + 0.25;
+      ball.vy = hitPos * 8;
+
+      createExplosion(
+        ball.x,
+        ball.y,
+        "#ff00ff"
+      );
+
+      shake = 9;
+
+    }
 
     ball.x = player.x + player.w + ball.r;
-
-    createExplosion(
-      ball.x,
-      ball.y,
-      "#ff00ff"
-    );
-
-    shake = 9;
 
   }
 
@@ -532,33 +477,11 @@ function update() {
     ball.vx > 0
   ) {
 
-    const badHit =
-      ball.y + ball.r < bot.y ||
-      ball.y - ball.r > bot.y + bot.h;
-
-    if (badHit) {
-
-      winner = "PLAYER WINS";
-
-      gameState = "gameover";
-
-      createExplosion(
-        ball.x,
-        ball.y,
-        "#ff3333"
-      );
-
-      return;
-
-    }
-
     let hitPos =
-
       (ball.y - (bot.y + bot.h / 2))
       / (bot.h / 2);
 
     ball.vx = -Math.abs(ball.vx) - 0.25;
-
     ball.vy = hitPos * 8;
 
     ball.x = bot.x - ball.r;
@@ -574,51 +497,36 @@ function update() {
   }
 
   if (ball.x < 0) {
-
     bot.score++;
-
     resetBall();
-
   }
 
   if (ball.x > canvas.width) {
-
     player.score++;
-
     resetBall();
-
   }
 
   if (player.score >= WIN_SCORE) {
-
     winner = "PLAYER WINS";
-
     gameState = "gameover";
-
   }
 
   if (bot.score >= WIN_SCORE) {
-
     winner = "BOT WINS";
-
     gameState = "gameover";
-
   }
 
   updateParticles();
 
   if (shake > 0) {
-
     shake--;
-
   }
 
 }
 
 function renderGame() {
 
-  ctx.fillStyle = "rgba(5,5,16,1)";
-
+  ctx.fillStyle = "#050510";
   ctx.fillRect(
     0,
     0,
@@ -631,11 +539,8 @@ function renderGame() {
 
   if (shake > 0) {
 
-    dx =
-      (Math.random() - 0.5) * shake;
-
-    dy =
-      (Math.random() - 0.5) * shake;
+    dx = (Math.random() - 0.5) * shake;
+    dy = (Math.random() - 0.5) * shake;
 
   }
 
@@ -651,7 +556,7 @@ function renderGame() {
 
   drawPaddle(
     player,
-    "#ff00ff"
+    smashActive ? "#ffffff" : "#ff00ff"
   );
 
   drawPaddle(
@@ -662,18 +567,17 @@ function renderGame() {
   drawBall();
 
   ctx.fillStyle = "white";
-
   ctx.font = "48px Arial";
 
   ctx.fillText(
     player.score,
-    canvas.width / 2 - 100,
+    canvas.width/2 - 100,
     60
   );
 
   ctx.fillText(
     bot.score,
-    canvas.width / 2 + 70,
+    canvas.width/2 + 70,
     60
   );
 
@@ -684,19 +588,13 @@ function renderGame() {
 function render() {
 
   if (gameState === "menu") {
-
     drawMenuScreen();
-
     return;
-
   }
 
   if (gameState === "gameover") {
-
     drawEndScreen();
-
     return;
-
   }
 
   renderGame();
@@ -713,6 +611,8 @@ function loop() {
 
 }
 
+resize();
+resetBall();
 loop();
 
 </script>

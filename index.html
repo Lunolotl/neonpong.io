@@ -168,10 +168,10 @@ canvas {
 
 <button id="settingsBtn">⚙️</button>
 <div id="settingsMenu">
-  <div class="settings-title">SETTINGS</div>
+  <div class="settings-title" id="settingsTitle">SETTINGS</div>
   
   <div class="settings-item">
-    <label class="settings-label">Difficulty:</label>
+    <label class="settings-label" id="difficultyLabel">Difficulty:</label>
     <select id="difficultySelect" class="settings-select">
       <option value="easy">Easy</option>
       <option value="normal" selected>Normal</option>
@@ -180,7 +180,7 @@ canvas {
   </div>
 
   <div class="settings-item">
-    <label class="settings-label">Language:</label>
+    <label class="settings-label" id="languageLabel">Language:</label>
     <select id="languageSelect" class="settings-select">
       <option value="en">English</option>
       <option value="fr">French</option>
@@ -188,7 +188,7 @@ canvas {
     </select>
   </div>
 
-  <button id="closeSettingsBtn">CLOSE</button>
+  <button id="closeSettingsBtn" style="font-size: 14px;">CLOSE</button>
 </div>
 
 <button id="smashBtn">SMASH</button>
@@ -202,6 +202,9 @@ const settingsMenu = document.getElementById("settingsMenu");
 const closeSettingsBtn = document.getElementById("closeSettingsBtn");
 const difficultySelect = document.getElementById("difficultySelect");
 const languageSelect = document.getElementById("languageSelect");
+const settingsTitle = document.getElementById("settingsTitle");
+const difficultyLabel = document.getElementById("difficultyLabel");
+const languageLabel = document.getElementById("languageLabel");
 
 let gameState = "menu";
 const WIN_SCORE = 5;
@@ -229,26 +232,45 @@ const translations = {
     menuInstructions: "CLICK: START • E OR BUTTON: SMASH",
     playerWon: "PLAYER WINS",
     botWon: "BOT WINS",
-    restartInstructions: "CLICK / TOUCH / SPACE TO RESTART"
+    restartInstructions: "CLICK / TOUCH / SPACE TO RESTART",
+    settings: "SETTINGS",
+    difficulty: "Difficulty:",
+    language: "Language:",
+    close: "CLOSE"
   },
   fr: {
     menuTitle: "NEON PONG",
     menuInstructions: "CLIQUE: COMMENCER ∙ E OU BOUTON : SMASH",
     playerWon: "JOUEUR GAGNE",
     botWon: "BOT GAGNE",
-    restartInstructions: "CLIQUE / TOUCHE / ESPACE POUR RECOMMENCER"
+    restartInstructions: "CLIQUE / TOUCHE / ESPACE POUR RECOMMENCER",
+    settings: "PARAMÈTRES",
+    difficulty: "Difficulté:",
+    language: "Langue:",
+    close: "FERMER"
   },
   es: {
     menuTitle: "NEON PONG",
     menuInstructions: "CLIC: COMENZAR • E O BOTÓN: GOLPE",
     playerWon: "JUGADOR GANA",
     botWon: "BOT GANA",
-    restartInstructions: "CLIC / TOQUE / ESPACIO PARA REINICIAR"
+    restartInstructions: "CLIC / TOQUE / ESPACIO PARA REINICIAR",
+    settings: "CONFIGURACIÓN",
+    difficulty: "Dificultad:",
+    language: "Idioma:",
+    close: "CERRAR"
   }
 };
 
 function getTranslation(key) {
   return translations[gameSettings.language][key];
+}
+
+function updateSettingsUI() {
+  settingsTitle.textContent = getTranslation("settings");
+  difficultyLabel.textContent = getTranslation("difficulty");
+  languageLabel.textContent = getTranslation("language");
+  closeSettingsBtn.textContent = getTranslation("close");
 }
 
 const player = {
@@ -375,6 +397,7 @@ difficultySelect.addEventListener("change", (e) => {
 
 languageSelect.addEventListener("change", (e) => {
   gameSettings.language = e.target.value;
+  updateSettingsUI();
 });
 
 // Close settings menu when clicking outside
@@ -387,13 +410,13 @@ document.addEventListener("click", (e) => {
 function applyDifficultySettings() {
   switch(gameSettings.difficulty) {
     case "easy":
-      // Bot AI less aggressive
+      // Bot AI disabled - cannot smash
       break;
     case "normal":
-      // Default settings
+      // Default settings - moderate smashing
       break;
     case "hard":
-      // Bot AI more aggressive
+      // Bot AI aggressive - frequent smashing
       break;
   }
 }
@@ -718,10 +741,10 @@ function update() {
   let botSmashChance = 0.015;
   switch(gameSettings.difficulty) {
     case "easy":
-      botSmashChance = 0.008;
+      botSmashChance = 0;
       break;
     case "normal":
-      botSmashChance = 0.015;
+      botSmashChance = 0.012;
       break;
     case "hard":
       botSmashChance = 0.025;
@@ -972,6 +995,7 @@ function loop() {
 
 resize();
 resetBall();
+updateSettingsUI();
 loop();
 </script>
 

@@ -378,7 +378,7 @@ smashBtn.addEventListener("mousedown", () => {
 
 window.addEventListener("pointerdown", e => {
 
-  if (e.target === smashBtn || e.target === settingsBtn || settingsMenu.contains(e.target)) return;
+  if (e.target === smashBtn || e.target === settingsBtn || e.target.closest("#settingsMenu")) return;
 
   if (gameState === "menu") {
     gameState = "playing";
@@ -413,7 +413,7 @@ languageSelect.addEventListener("change", (e) => {
 
 // Close settings menu when clicking outside
 document.addEventListener("click", (e) => {
-  if (e.target !== settingsBtn && e.target !== settingsMenu && !settingsMenu.contains(e.target)) {
+  if (e.target !== settingsBtn && !e.target.closest("#settingsMenu")) {
     settingsMenu.classList.remove("open");
   }
 });
@@ -999,81 +999,53 @@ function renderGame() {
   let dy = 0;
 
   if (shake > 0) {
-
-    dx =
-      (Math.random() - 0.5) * shake;
-
-    dy =
-      (Math.random() - 0.5) * shake;
-
+    dx = (Math.random() - 0.5) * shake;
+    dy = (Math.random() - 0.5) * shake;
   }
-
-  ctx.save();
 
   ctx.translate(dx, dy);
 
   drawCenterLine();
 
+  drawPaddle(player, "#ff00ff");
+
+  drawPaddle(bot, "#39ff14");
+
+  drawBall();
+
   drawTrail();
 
   drawParticles();
 
-  drawPaddle(
-    player,
-    smashActive
-      ? "#ffffff"
-      : "#ff00ff"
-  );
+  ctx.resetTransform();
 
-  drawPaddle(
-    bot,
-    botSmashActive
-      ? "#ffffff"
-      : "#39ff14"
-  );
-
-  drawBall();
-
-  ctx.fillStyle = "white";
-
-  ctx.font = "48px Arial";
-
-    ctx.fillText(
-    player.score,
-    canvas.width / 2 - 100,
-    60
-  );
-
-  ctx.fillText(
-    bot.score,
-    canvas.width / 2 + 70,
-    60
-  );
-
-  ctx.restore();
-
-}
-
-function render() {
-
-  if (gameState === "menu") {
-    drawMenuScreen();
-    return;
-  }
-
-  if (gameState === "gameover") {
-    drawEndScreen();
-    return;
-  }
-
-  renderGame();
+  // Draw scores
+  ctx.fillStyle = "#00e5ff";
+  ctx.font = "bold 40px Arial";
+  ctx.textAlign = "left";
+  ctx.fillText(player.score, 50, 50);
+  ctx.textAlign = "right";
+  ctx.fillText(bot.score, canvas.width - 50, 50);
 
 }
 
 function gameLoop() {
-  update();
-  render();
+
+  if (gameState === "menu") {
+    drawMenuScreen();
+  }
+
+  if (gameState === "playing") {
+    update();
+    renderGame();
+  }
+
+  if (gameState === "gameover") {
+    drawEndScreen();
+  }
+
   requestAnimationFrame(gameLoop);
+
 }
 
 resize();

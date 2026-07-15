@@ -42,11 +42,153 @@ canvas {
 #smashBtn:active{
   transform: translateX(-50%) scale(0.95);
 }
+
+#settingsBtn {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 50px;
+  height: 50px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  color: white;
+  font-size: 24px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 0 15px #00e5ff;
+  z-index: 20;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+#settingsBtn:hover {
+  box-shadow: 0 0 25px #00e5ff;
+  background: rgba(0, 229, 255, 0.2);
+}
+
+#settingsBtn:active {
+  transform: scale(0.9);
+}
+
+#settingsMenu {
+  position: fixed;
+  bottom: 80px;
+  left: 20px;
+  background: rgba(5, 5, 16, 0.95);
+  border: 2px solid #00e5ff;
+  border-radius: 15px;
+  padding: 25px;
+  width: 300px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.4);
+  z-index: 25;
+  display: none;
+  font-family: Arial, sans-serif;
+}
+
+#settingsMenu.open {
+  display: block;
+}
+
+.settings-title {
+  color: #00e5ff;
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  text-shadow: 0 0 10px #00e5ff;
+}
+
+.settings-item {
+  margin-bottom: 20px;
+  color: white;
+}
+
+.settings-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #cccccc;
+}
+
+.settings-select,
+.settings-checkbox {
+  width: 100%;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid #00e5ff;
+  border-radius: 5px;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.settings-select:hover,
+.settings-checkbox:hover {
+  background: rgba(0, 229, 255, 0.2);
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.settings-checkbox {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+#closeSettingsBtn {
+  width: 100%;
+  padding: 10px;
+  margin-top: 15px;
+  background: rgba(255, 0, 255, 0.2);
+  border: 1px solid #ff00ff;
+  border-radius: 5px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+#closeSettingsBtn:hover {
+  background: rgba(255, 0, 255, 0.4);
+  box-shadow: 0 0 15px #ff00ff;
+}
 </style>
 </head>
 <body>
 
 <canvas id="game"></canvas>
+
+<button id="settingsBtn">⚙️</button>
+<div id="settingsMenu">
+  <div class="settings-title">SETTINGS</div>
+  
+  <div class="settings-item">
+    <label class="settings-label">Difficulty:</label>
+    <select id="difficultySelect" class="settings-select">
+      <option value="easy">Easy</option>
+      <option value="normal" selected>Normal</option>
+      <option value="hard">Hard</option>
+    </select>
+  </div>
+
+  <div class="settings-item">
+    <label class="settings-label">Sound Effects:</label>
+    <div class="checkbox-wrapper">
+      <input type="checkbox" id="soundToggle" class="settings-checkbox" checked>
+      <label for="soundToggle" style="margin: 0; color: #cccccc; cursor: pointer;">Enabled</label>
+    </div>
+  </div>
+
+  <button id="closeSettingsBtn">CLOSE</button>
+</div>
 
 <button id="smashBtn">SMASH</button>
 
@@ -54,6 +196,11 @@ canvas {
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const smashBtn = document.getElementById("smashBtn");
+const settingsBtn = document.getElementById("settingsBtn");
+const settingsMenu = document.getElementById("settingsMenu");
+const closeSettingsBtn = document.getElementById("closeSettingsBtn");
+const difficultySelect = document.getElementById("difficultySelect");
+const soundToggle = document.getElementById("soundToggle");
 
 let gameState = "menu";
 const WIN_SCORE = 5;
@@ -67,6 +214,12 @@ let smashTimer = 0;
 
 let botSmashActive = false;
 let botSmashCooldown = 0;
+
+// Game settings
+let gameSettings = {
+  difficulty: "normal",
+  soundEnabled: true
+};
 
 const player = {
   x: 20,
@@ -174,6 +327,45 @@ window.addEventListener("pointerdown", e => {
   }
 
 });
+
+// Settings menu handlers
+settingsBtn.addEventListener("click", () => {
+  settingsMenu.classList.toggle("open");
+});
+
+closeSettingsBtn.addEventListener("click", () => {
+  settingsMenu.classList.remove("open");
+});
+
+difficultySelect.addEventListener("change", (e) => {
+  gameSettings.difficulty = e.target.value;
+  applyDifficultySettings();
+});
+
+soundToggle.addEventListener("change", (e) => {
+  gameSettings.soundEnabled = e.target.checked;
+});
+
+// Close settings menu when clicking outside
+document.addEventListener("click", (e) => {
+  if (e.target !== settingsBtn && e.target !== settingsMenu && !settingsMenu.contains(e.target)) {
+    settingsMenu.classList.remove("open");
+  }
+});
+
+function applyDifficultySettings() {
+  switch(gameSettings.difficulty) {
+    case "easy":
+      // Bot AI less aggressive
+      break;
+    case "normal":
+      // Default settings
+      break;
+    case "hard":
+      // Bot AI more aggressive
+      break;
+  }
+}
 
 function resetGame() {
   player.score = 0;
@@ -491,11 +683,25 @@ function update() {
     ball.y - (bot.y + bot.h / 2)
   ) * 0.14;
 
+  // Difficulty-based bot AI
+  let botSmashChance = 0.015;
+  switch(gameSettings.difficulty) {
+    case "easy":
+      botSmashChance = 0.008;
+      break;
+    case "normal":
+      botSmashChance = 0.015;
+      break;
+    case "hard":
+      botSmashChance = 0.025;
+      break;
+  }
+
   if (
     ball.vx > 0 &&
     ball.x > canvas.width * 0.72 &&
     botSmashCooldown <= 0 &&
-    Math.random() < 0.015
+    Math.random() < botSmashChance
   ) {
     botSmashActive = true;
   }

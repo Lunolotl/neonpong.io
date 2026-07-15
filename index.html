@@ -63,6 +63,13 @@ canvas {
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
+  padding: 0;
+}
+
+#settingsBtn img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
 }
 
 #settingsBtn:hover {
@@ -166,7 +173,7 @@ canvas {
 
 <canvas id="game"></canvas>
 
-<button id="settingsBtn">⚙️</button>
+<button id="settingsBtn"><img src="settingsicon.png" alt="Settings"></button>
 <div id="settingsMenu">
   <div class="settings-title" id="settingsTitle">SETTINGS</div>
   
@@ -998,20 +1005,15 @@ function render() {
 
 }
 
-function loop() {
-
+function gameLoop() {
   update();
   render();
-
-  requestAnimationFrame(loop);
-
+  requestAnimationFrame(gameLoop);
 }
 
 resize();
-resetBall();
 updateSettingsUI();
-loop();
+gameLoop();
 </script>
-
 </body>
 </html>

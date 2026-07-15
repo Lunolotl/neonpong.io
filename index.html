@@ -326,10 +326,14 @@ window.addEventListener("resize", resize);
 
   window.addEventListener("mousemove", e => {
   player.y = e.clientY - player.h / 2;
+  // Clamp player paddle to canvas bounds
+  player.y = Math.max(0, Math.min(player.y, canvas.height - player.h));
 });
 
 window.addEventListener("touchmove", e => {
   player.y = e.touches[0].clientY - player.h / 2;
+  // Clamp player paddle to canvas bounds
+  player.y = Math.max(0, Math.min(player.y, canvas.height - player.h));
 }, { passive: true });
 
 window.addEventListener("keydown", e => {
@@ -458,6 +462,56 @@ function collision(ball, paddle) {
     ball.y - ball.r < paddle.y + paddle.h &&
     ball.y + ball.r > paddle.y
   );
+}
+
+function lineIntersectsRect(x1, y1, x2, y2, rect) {
+  // Check if a line segment from (x1,y1) to (x2,y2) intersects with a rectangle
+  const rectLeft = rect.x;
+  const rectRight = rect.x + rect.w;
+  const rectTop = rect.y;
+  const rectBottom = rect.y + rect.h;
+
+  // Check if either endpoint is inside the rect
+  if ((x1 >= rectLeft && x1 <= rectRight && y1 >= rectTop && y1 <= rectBottom) ||
+      (x2 >= rectLeft && x2 <= rectRight && y2 >= rectTop && y2 <= rectBottom)) {
+    return true;
+  }
+
+  // Check intersection with rect edges
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+
+  // Left and right edges
+  if (dx !== 0) {
+    const tLeft = (rectLeft - x1) / dx;
+    const tRight = (rectRight - x1) / dx;
+    
+    for (let t of [tLeft, tRight]) {
+      if (t >= 0 && t <= 1) {
+        const yAtT = y1 + t * dy;
+        if (yAtT >= rectTop && yAtT <= rectBottom) {
+          return true;
+        }
+      }
+    }
+  }
+
+  // Top and bottom edges
+  if (dy !== 0) {
+    const tTop = (rectTop - y1) / dy;
+    const tBottom = (rectBottom - y1) / dy;
+    
+    for (let t of [tTop, tBottom]) {
+      if (t >= 0 && t <= 1) {
+        const xAtT = x1 + t * dx;
+        if (xAtT >= rectLeft && xAtT <= rectRight) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
 }
 
 function createExplosion(x, y, color) {
@@ -710,6 +764,9 @@ function update() {
     botSmashCooldown--;
   }
 
+  const prevBallX = ball.x;
+  const prevBallY = ball.y;
+
   ball.x += ball.vx;
   ball.y += ball.vy;
 
@@ -740,6 +797,9 @@ function update() {
 
   }
 
+  // Clamp ball Y to canvas bounds
+  ball.y = Math.max(ball.r, Math.min(ball.y, canvas.height - ball.r));
+
   // Difficulty-based bot speed
   let botSpeed = 0.14;
   switch(gameSettings.difficulty) {
@@ -757,6 +817,9 @@ function update() {
   bot.y += (
     ball.y - (bot.y + bot.h / 2)
   ) * botSpeed;
+  
+  // Clamp bot paddle to canvas bounds
+  bot.y = Math.max(0, Math.min(bot.y, canvas.height - bot.h));
 
   // Difficulty-based bot AI
   let botSmashChance = 0.015;
@@ -781,9 +844,10 @@ function update() {
     botSmashActive = true;
   }
 
+  // Player collision with continuous detection
   if (
-    collision(ball, player) &&
-    ball.vx < 0
+    ball.vx < 0 &&
+    (collision(ball, player) || lineIntersectsRect(prevBallX, prevBallY, ball.x, ball.y, player))
   ) {
 
     let hitPos =
@@ -833,9 +897,10 @@ function update() {
 
   }
 
+  // Bot collision with continuous detection
   if (
-    collision(ball, bot) &&
-    ball.vx > 0
+    ball.vx > 0 &&
+    (collision(ball, bot) || lineIntersectsRect(prevBallX, prevBallY, ball.x, ball.y, bot))
   ) {
 
     let hitPos =

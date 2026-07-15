@@ -180,11 +180,12 @@ canvas {
   </div>
 
   <div class="settings-item">
-    <label class="settings-label">Sound Effects:</label>
-    <div class="checkbox-wrapper">
-      <input type="checkbox" id="soundToggle" class="settings-checkbox" checked>
-      <label for="soundToggle" style="margin: 0; color: #cccccc; cursor: pointer;">Enabled</label>
-    </div>
+    <label class="settings-label">Language:</label>
+    <select id="languageSelect" class="settings-select">
+      <option value="en">English</option>
+      <option value="fr">French</option>
+      <option value="es">Spanish</option>
+    </select>
   </div>
 
   <button id="closeSettingsBtn">CLOSE</button>
@@ -200,7 +201,7 @@ const settingsBtn = document.getElementById("settingsBtn");
 const settingsMenu = document.getElementById("settingsMenu");
 const closeSettingsBtn = document.getElementById("closeSettingsBtn");
 const difficultySelect = document.getElementById("difficultySelect");
-const soundToggle = document.getElementById("soundToggle");
+const languageSelect = document.getElementById("languageSelect");
 
 let gameState = "menu";
 const WIN_SCORE = 5;
@@ -218,8 +219,37 @@ let botSmashCooldown = 0;
 // Game settings
 let gameSettings = {
   difficulty: "normal",
-  soundEnabled: true
+  language: "en"
 };
+
+// Language translations
+const translations = {
+  en: {
+    menuTitle: "NEON PONG",
+    menuInstructions: "CLICK: START • E OR BUTTON: SMASH",
+    playerWon: "PLAYER WINS",
+    botWon: "BOT WINS",
+    restartInstructions: "CLICK / TOUCH / SPACE TO RESTART"
+  },
+  fr: {
+    menuTitle: "NEON PONG",
+    menuInstructions: "CLIQUE: COMMENCER ∙ E OU BOUTON : SMASH",
+    playerWon: "JOUEUR GAGNE",
+    botWon: "BOT GAGNE",
+    restartInstructions: "CLIQUE / TOUCHE / ESPACE POUR RECOMMENCER"
+  },
+  es: {
+    menuTitle: "NEON PONG",
+    menuInstructions: "CLIC: COMENZAR • E O BOTÓN: GOLPE",
+    playerWon: "JUGADOR GANA",
+    botWon: "BOT GANA",
+    restartInstructions: "CLIC / TOQUE / ESPACIO PARA REINICIAR"
+  }
+};
+
+function getTranslation(key) {
+  return translations[gameSettings.language][key];
+}
 
 const player = {
   x: 20,
@@ -315,7 +345,7 @@ smashBtn.addEventListener("mousedown", () => {
 
 window.addEventListener("pointerdown", e => {
 
-  if (e.target === smashBtn) return;
+  if (e.target === smashBtn || e.target === settingsBtn || settingsMenu.contains(e.target)) return;
 
   if (gameState === "menu") {
     gameState = "playing";
@@ -329,7 +359,8 @@ window.addEventListener("pointerdown", e => {
 });
 
 // Settings menu handlers
-settingsBtn.addEventListener("click", () => {
+settingsBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
   settingsMenu.classList.toggle("open");
 });
 
@@ -342,8 +373,8 @@ difficultySelect.addEventListener("change", (e) => {
   applyDifficultySettings();
 });
 
-soundToggle.addEventListener("change", (e) => {
-  gameSettings.soundEnabled = e.target.checked;
+languageSelect.addEventListener("change", (e) => {
+  gameSettings.language = e.target.value;
 });
 
 // Close settings menu when clicking outside
@@ -567,7 +598,7 @@ function drawMenuScreen() {
   ctx.font = "bold 90px Arial";
 
   ctx.fillText(
-    "NEON PONG",
+    getTranslation("menuTitle"),
     canvas.width / 2,
     canvas.height / 2 - 60
   );
@@ -578,7 +609,7 @@ function drawMenuScreen() {
   ctx.font = "28px Arial";
 
   ctx.fillText(
-    "CLIQUE: COMMENCER ∙ E OU BOUTON : SMASH",
+    getTranslation("menuInstructions"),
     canvas.width / 2,
     canvas.height / 2 + 40
   );
@@ -597,7 +628,7 @@ function drawEndScreen() {
   ctx.textAlign = "center";
 
   ctx.fillStyle =
-    winner === "JOUEUR GAGNE"
+    winner === getTranslation("playerWon")
       ? "#00ff99"
       : "#ff0044";
 
@@ -626,7 +657,7 @@ function drawEndScreen() {
   ctx.font = "24px Arial";
 
   ctx.fillText(
-    "CLIQUE / TOUCHE / ESPACE POUR RECOMMENCER",
+    getTranslation("restartInstructions"),
     canvas.width / 2,
     canvas.height / 2 + 80
   );
@@ -827,12 +858,12 @@ function update() {
   }
 
   if (player.score >= WIN_SCORE) {
-    winner = "JOUEUR GAGNE";
+    winner = getTranslation("playerWon");
     gameState = "gameover";
   }
 
   if (bot.score >= WIN_SCORE) {
-    winner = "BOT GAGNE";
+    winner = getTranslation("botWon");
     gameState = "gameover";
   }
 

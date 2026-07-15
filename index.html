@@ -733,9 +733,23 @@ function update() {
 
   }
 
+  // Difficulty-based bot speed
+  let botSpeed = 0.14;
+  switch(gameSettings.difficulty) {
+    case "easy":
+      botSpeed = 0.08;
+      break;
+    case "normal":
+      botSpeed = 0.14;
+      break;
+    case "hard":
+      botSpeed = 0.18;
+      break;
+  }
+
   bot.y += (
     ball.y - (bot.y + bot.h / 2)
-  ) * 0.14;
+  ) * botSpeed;
 
   // Difficulty-based bot AI
   let botSmashChance = 0.015;
